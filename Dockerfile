@@ -21,7 +21,7 @@ RUN npm ci --omit=dev
 FROM $BASE_IMAGE AS build
 
 RUN apt-get update && \
-    apt-get install -y nginx tini && \
+    apt-get install -y --fix-missing nginx tini && \
     rm -rf /var/lib/apt/lists/*
 
 ARG USER=${USER:-root}
