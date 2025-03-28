@@ -10,6 +10,10 @@ RUN npm ci
 COPY src ./src
 RUN npm run build
 
+# 添加这些行来创建并填充 nginx 目录
+RUN mkdir -p /opt/openbmclapi/nginx
+COPY path/to/local/nginx/config/files /opt/openbmclapi/nginx/
+
 FROM $BASE_IMAGE AS modules
 WORKDIR /opt/openbmclapi
 
