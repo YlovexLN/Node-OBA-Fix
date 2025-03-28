@@ -72,6 +72,7 @@ EXPOSE $CLUSTER_PORT
 
 # 设置卷
 VOLUME /opt/openbmclapi/cache
+VOLUME /opt/openbmclapi/.env
 
 # 设置容器启动时的默认命令
 CMD ["tini", "--", "node", "--enable-source-maps", "dist/index.js"]
