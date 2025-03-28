@@ -5,6 +5,7 @@ WORKDIR /opt/openbmclapi
 RUN apt update && \
     apt install -y build-essential python3
 COPY package-lock.json package.json tsconfig.json ./
+COPY copy-files.cjs ./
 RUN npm ci
 COPY src ./src
 RUN npm run build
@@ -32,7 +33,7 @@ USER $USER
 WORKDIR /opt/openbmclapi
 COPY --from=modules /opt/openbmclapi/node_modules ./node_modules
 COPY --from=install /opt/openbmclapi/dist ./dist
-COPY nginx/ /opt/openbmclapi/nginx
+COPY --from=install /opt/openbmclapi/nginx ./nginx
 COPY package.json ./
 
 ENV CLUSTER_PORT=4000
