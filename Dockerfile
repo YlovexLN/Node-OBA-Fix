@@ -19,6 +19,9 @@ RUN npm ci
 COPY src ./src
 COPY copy-files.cjs ./
 
+# 安装额外的依赖
+RUN npm install @mongodb-js/zstd-linux-x64-gnu
+
 # 构建项目
 RUN npm run build
 
