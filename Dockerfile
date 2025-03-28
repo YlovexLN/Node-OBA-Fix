@@ -15,7 +15,7 @@ COPY package-lock.json package.json tsconfig.json ./
 # 清理缓存并安装依赖
 RUN rm -rf node_modules package-lock.json && \
     npm cache clean --force && \
-    npm ci
+    npm ci --verbose
 
 # 复制源代码和 copy-files.cjs 文件
 COPY src ./src
@@ -36,7 +36,7 @@ RUN apt update && \
 COPY package-lock.json package.json ./
 
 # 安装生产环境依赖
-RUN npm ci
+RUN npm ci --verbose
 
 # 使用基础镜像创建 build 阶段
 FROM $BASE_IMAGE AS build
