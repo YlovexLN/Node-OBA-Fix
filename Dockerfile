@@ -1,46 +1,55 @@
-ARG BASE_IMAGE=node:20-bullseye-slim
-FROM $BASE_IMAGE AS install
+# 使用node官方镜像作为基础镜像
+FROM node:20-bullseye-slim AS build
 
+# 设置工作目录为 /opt/openbmclapi
 WORKDIR /opt/openbmclapi
-RUN apt update && \
-    apt install -y build-essential python3
+
+# 安装构建依赖项
+RUN apt-get update && \
+    apt-get install -y build-essential python3
+
+# 复制项目文件
 COPY package-lock.json package.json tsconfig.json ./
 COPY copy-files.cjs ./
-RUN npm ci
 COPY src ./src
+
+# 安装npm依赖项
+RUN npm ci
+
+# 构建项目
 RUN npm run build
 
-# 添加这些行来创建并填充 nginx 目录
-RUN mkdir -p /opt/openbmclapi/nginx
-COPY path/to/local/nginx/config/files /opt/openbmclapi/nginx/
+# 使用一个新的基础镜像来减小镜像体积
+FROM node:20-bullseye-slim
 
-FROM $BASE_IMAGE AS modules
-WORKDIR /opt/openbmclapi
-
-RUN apt update && \
-    apt install -y build-essential python3
-COPY package-lock.json package.json ./
-RUN npm ci --omit=dev
-
-FROM $BASE_IMAGE AS build
-
+# 安装运行时依赖项
 RUN apt-get update && \
-    apt-get install -y --fix-missing nginx tini && \
+    apt-get install -y nginx tini && \
     rm -rf /var/lib/apt/lists/*
 
-ARG USER=${USER:-root}
-
-RUN chown -R $USER /var/log/nginx /var/lib/nginx
-
-USER $USER
-
+# 设置工作目录为 /opt/openbmclapi
 WORKDIR /opt/openbmclapi
-COPY --from=modules /opt/openbmclapi/node_modules ./node_modules
-COPY --from=install /opt/openbmclapi/dist ./dist
-COPY --from=install /opt/openbmclapi/nginx ./nginx
+
+# 复制构建出的文件和运行时需要的文件
+COPY --from=build /opt/openbmclapi/dist ./dist
+COPY --from=build /opt/openbmclapi/node_modules ./node_modules
 COPY package.json ./
 
+# 假定配置文件已经在项目目录下
+# 如果配置文件在其他位置，请调整路径
+COPY nginx /opt/openbmclapi/nginx
+
+# 设置环境变量和端口
 ENV CLUSTER_PORT=4000
 EXPOSE $CLUSTER_PORT
+
+# 设置用户权限
+ARG USER=${USER:-root}
+RUN chown -R $USER /var/log/nginx /var/lib/nginx
+USER $USER
+
+# 设置挂载卷
 VOLUME /opt/openbmclapi
+
+# 设置容器启动命令
 CMD ["tini", "--", "node", "--enable-source-maps", "dist/index.js"]
