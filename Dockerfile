@@ -35,7 +35,6 @@ COPY --from=install /opt/openbmclapi/dist ./dist
 COPY nginx/ /opt/openbmclapi/nginx
 COPY package.json ./
 
-
 ENV CLUSTER_PORT=4000
 EXPOSE $CLUSTER_PORT
 VOLUME /opt/openbmclapi
