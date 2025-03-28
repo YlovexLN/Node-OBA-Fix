@@ -7,15 +7,13 @@ WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
 RUN apt update && \
-    apt install -y build-essential python3 pkg-config libzstd-dev
+    apt install -y build-essential python3
 
 # 复制 package-lock.json, package.json 和 tsconfig.json 文件
 COPY package-lock.json package.json tsconfig.json ./
 
-# 清理缓存并安装依赖
-RUN rm -rf node_modules package-lock.json && \
-    npm cache clean --force && \
-    npm ci --verbose
+# 安装项目依赖
+RUN npm ci
 
 # 复制源代码和 copy-files.cjs 文件
 COPY src ./src
@@ -30,13 +28,13 @@ WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
 RUN apt update && \
-    apt install -y build-essential python3 pkg-config libzstd-dev
+    apt install -y build-essential python3
 
 # 复制 package-lock.json 和 package.json 文件
 COPY package-lock.json package.json ./
 
 # 安装生产环境依赖
-RUN npm ci --verbose
+RUN npm ci --omit=dev
 
 # 使用基础镜像创建 build 阶段
 FROM $BASE_IMAGE AS build
