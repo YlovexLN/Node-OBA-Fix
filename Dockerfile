@@ -7,13 +7,13 @@ WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
 RUN apt update && \
-    apt install -y build-essential python3
+    apt install -y build-essential python3 libzstd-dev
 
 # 复制 package-lock.json, package.json 和 tsconfig.json 文件
 COPY package-lock.json package.json tsconfig.json ./
 
-# 安装项目依赖
-RUN npm ci
+# 安装项目依赖并重建二进制模块
+RUN npm ci && npm rebuild
 
 # 复制源代码和 copy-files.cjs 文件
 COPY src ./src
@@ -28,7 +28,7 @@ WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
 RUN apt update && \
-    apt install -y build-essential python3
+    apt install -y build-essential python3 libzstd-dev
 
 # 复制 package-lock.json 和 package.json 文件
 COPY package-lock.json package.json ./
@@ -42,10 +42,11 @@ FROM $BASE_IMAGE AS build
 # 更新 apt 并安装 nginx 和 tini，并清理 apt 缓存
 RUN apt-get update && \
     apt-get install -y nginx tini && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# 设置用户变量，默认为 root
-ARG USER=${USER:-root}
+# 设置用户变量，默认为 node
+ARG USER=node
 
 # 修改 nginx 日志和库目录的所有者
 RUN chown -R $USER /var/log/nginx /var/lib/nginx
