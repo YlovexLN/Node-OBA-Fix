@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=node:20-bullseye-slim
 
 # 定义一个构建阶段用于 x64 平台
-FROM $BASE_IMAGE AS builder-x64
+FROM ${BASE_IMAGE} AS builder-amd64
 WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
@@ -26,7 +26,7 @@ RUN npm install @mongodb-js/zstd-linux-x64-gnu
 RUN npm run build
 
 # 定义一个构建阶段用于 arm64 平台
-FROM $BASE_IMAGE AS builder-arm64
+FROM ${BASE_IMAGE} AS builder-arm64
 WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
@@ -50,7 +50,7 @@ RUN npm install @mongodb-js/zstd-linux-arm64-gnu
 RUN npm run build
 
 # 创建最终镜像
-FROM $BASE_IMAGE AS final
+FROM ${BASE_IMAGE} AS final
 WORKDIR /opt/openbmclapi
 
 # 更新 apt 并安装必要的依赖
@@ -71,9 +71,9 @@ USER $USER
 WORKDIR /opt/openbmclapi
 
 # 根据平台选择正确的构建结果和依赖
-ARG TARGETARCH
-COPY --from=builder-${TARGETARCH} /opt/openbmclapi/node_modules ./node_modules
-COPY --from=builder-${TARGETARCH} /opt/openbmclapi/dist ./dist
+ARG TARGETPLATFORM
+COPY --from=builder-${TARGETPLATFORM} /opt/openbmclapi/node_modules ./node_modules
+COPY --from=builder-${TARGETPLATFORM} /opt/openbmclapi/dist ./dist
 
 # 复制 nginx 配置文件
 COPY nginx/ /opt/openbmclapi/nginx
