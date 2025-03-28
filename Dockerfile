@@ -15,8 +15,9 @@ COPY package-lock.json package.json tsconfig.json ./
 # 安装项目依赖
 RUN npm ci
 
-# 复制源代码
+# 复制源代码和 copy-files.cjs 文件
 COPY src ./src
+COPY copy-files.cjs ./
 
 # 构建项目
 RUN npm run build
@@ -71,7 +72,6 @@ EXPOSE $CLUSTER_PORT
 
 # 设置卷
 VOLUME /opt/openbmclapi/cache
-VOLUME /opt/openbmclapi/.env
 
 # 设置容器启动时的默认命令
 CMD ["tini", "--", "node", "--enable-source-maps", "dist/index.js"]
