@@ -14,7 +14,7 @@ COPY package-lock.json package.json tsconfig.json ./
 COPY copy-files.cjs ./
 
 # 安装依赖
-RUN npm ci
+RUN npm i
 
 # 复制源代码
 COPY src ./src
