@@ -1,7 +1,7 @@
 {
   "name": "node_oba_fix",
   "protocol_version": "1.13.1",
-  "version": "1.5.7",
+  "version": "1.5.9",
   "description": "Node-OpenBMCLAPI-Fix",
   "bin": "dist/openbmclapi.js",
   "private": true,
@@ -49,6 +49,7 @@
     "keyv": "^4.5.4",
     "keyv-file": "^0.3.0",
     "lodash-es": "^4.17.21",
+    "minio": "^8.0.5",
     "morgan": "^1.9.1",
     "ms": "^2.1.2",
     "node-fetch": "^3.3.2",

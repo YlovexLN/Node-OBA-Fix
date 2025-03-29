@@ -58,6 +58,10 @@ export class WebdavStorage implements IStorage {
     }
   }
 
+  public getAbsolutePath(path: string): string {
+    return this.client.getFileDownloadLink(join(this.basePath, path))
+  }
+
   public async check(): Promise<boolean> {
     try {
       await this.client.putFileContents(join(this.basePath, '.check'), Buffer.from(Date.now().toString()))
@@ -92,10 +96,6 @@ export class WebdavStorage implements IStorage {
       await this.existsCache.set(path, true)
     }
     return exists
-  }
-
-  public getAbsolutePath(path: string): string {
-    return this.client.getFileDownloadLink(join(this.basePath, path))
   }
 
   public async getMissingFiles<T extends {path: string; hash: string; size: number}>(files: T[]): Promise<T[]> {

@@ -7,7 +7,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { Cluster } from './cluster.js';
 import { config } from './config.js';
-import { logger } from './logger.js';
+import {logger, sync_logger} from './logger.js'
 import { TokenManager } from './token.js';
 import { IFileList } from './types.js';
 import got from 'got';
@@ -130,6 +130,7 @@ export async function bootstrap(version: string, protocol_version: string): Prom
   logger.info(colors.green(`当前版本: ${version}`));
   logger.info(colors.green(`协议版本: ${protocol_version}`));
   logger.debug(colors.yellow(`已开启debug日志`));
+  logger.debug(colors.yellow(`已开启Webhook功能`));
 
   checkUpdate().catch(console.error);
 
@@ -205,7 +206,9 @@ export async function bootstrap(version: string, protocol_version: string): Prom
   await tokenManager.getToken();
   const cluster = new Cluster(config.clusterSecret, protocol_version, tokenManager);
   await cluster.init();
-  cluster.connect();
+  if(!config.noConnect){
+    cluster.connect();
+  }
 
   let proto: 'http' | 'https' = 'https';
   if (config.byoc) {
@@ -217,8 +220,12 @@ export async function bootstrap(version: string, protocol_version: string): Prom
       await cluster.useSelfCert();
     }
   } else {
-    logger.info('请求证书');
-    await cluster.requestCert();
+    if(!config.noConnect){
+      logger.info('请求证书');
+      await cluster.requestCert();
+    } else {
+      logger.info('已跳过请求证书');
+    }
   }
 
   if (config.enableNginx) {
@@ -244,15 +251,16 @@ export async function bootstrap(version: string, protocol_version: string): Prom
 
   // 如果是 alist 类型存储，生成 10MB 的测速文件
   if (storageType === 'alist') {
-    logger.debug('准备生成测速文件');
+    logger.debug('准备预生成测速文件');
     try {
       // 同时生成 1MB 和 10MB 测速文件
       await Promise.all([
         createAndUploadFileToAlist(1),
         createAndUploadFileToAlist(10),
       ]);
+      logger.info('预生成测速文件完毕')
     } catch (error) {
-      logger.error(error, '生成测速文件失败');
+      logger.error(error, '预生成测速文件失败');
       throw new Error('测速文件生成失败');
     }
   }
@@ -260,28 +268,29 @@ export async function bootstrap(version: string, protocol_version: string): Prom
 
   const configuration = await cluster.getConfiguration();
   const files = await cluster.getFileList();
-  logger.info(`${files.files.length} files`);
+  sync_logger.info(`${files.files.length} files`);
   try {
     await cluster.syncFiles(files, configuration.sync);
   } catch (e) {
     if (e instanceof HTTPError) {
-      logger.error({ url: e.response.url }, '下载失败');
+      sync_logger.error({ url: e.response.url }, '下载失败');
     }
     throw e;
   }
-  logger.info('回收文件');
+  sync_logger.info('回收文件');
   cluster.gcBackground(files);
 
   let checkFileInterval: NodeJS.Timeout;
-  if (config.noENABLE === true) {
-    logger.info('节点上线功能已禁用');
-    logger.info('节点上线功能已禁用');
-    logger.info('节点上线功能已禁用');
+  if (config.noENABLE) {
+    logger.warn('节点上线功能已禁用');
+    logger.warn('节点上线功能已禁用');
+    logger.warn('节点上线功能已禁用');
+    logger.warn('节点上线功能已禁用');
+    logger.warn('节点上线功能已禁用');    
   } else {
     try {
       logger.info('请求上线');
       await cluster.enable();
-
       logger.info(colors.rainbow(`节点启动完毕, 正在提供 ${files.files.length} 个文件`));
       if (nodeCluster.isWorker && typeof process.send === 'function') {
         process.send('ready');
@@ -303,12 +312,12 @@ export async function bootstrap(version: string, protocol_version: string): Prom
   }
 
   async function checkFile(lastFileList: IFileList): Promise<void> {
-    logger.debug('刷新文件中');
+    sync_logger.debug('刷新文件中');
     try {
       const lastModified = max(lastFileList.files.map((file) => file.mtime));
       const fileList = await cluster.getFileList(lastModified);
       if (fileList.files.length === 0) {
-        logger.debug('没有新文件');
+        sync_logger.debug('没有新文件');
         return;
       }
       const configuration = await cluster.getConfiguration();
@@ -317,7 +326,7 @@ export async function bootstrap(version: string, protocol_version: string): Prom
     } finally {
       checkFileInterval = setTimeout(() => {
         checkFile(lastFileList).catch((e) => {
-          logger.error(e, '文件检查失败');
+          sync_logger.error(e, '文件检查失败');
         });
       }, ms('10m'));
     }
