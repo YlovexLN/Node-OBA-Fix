@@ -34,7 +34,7 @@ RUN apt update && \
 COPY package-lock.json package.json ./
 
 # 安装生产环境依赖
-RUN npm ci --omit=dev
+RUN npm i --omit=dev
 
 # 使用基础镜像创建 build 阶段
 FROM $BASE_IMAGE AS build
