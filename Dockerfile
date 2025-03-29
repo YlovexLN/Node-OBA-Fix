@@ -13,7 +13,7 @@ COPY package-lock.json package.json tsconfig.json ./
 COPY copy-files.cjs ./
 
 # 安装所有依赖（包括dev）
-RUN npm ci
+RUN npm i
 
 # 复制源代码并构建
 COPY src ./src
