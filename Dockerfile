@@ -10,7 +10,8 @@ RUN apt update && \
 
 # 复制项目文件
 COPY package-lock.json package.json tsconfig.json ./
-COPY copy-files.cjs ./  # 添加这一行，确保 copy-files.cjs 被复制
+# 添加这一行，确保 copy-files.cjs 被复制
+COPY copy-files.cjs ./
 
 # 安装依赖
 RUN npm ci
