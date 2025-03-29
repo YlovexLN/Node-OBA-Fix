@@ -5,16 +5,15 @@ WORKDIR /opt/openbmclapi
 
 # 安装必要的系统依赖
 RUN apt update && \
-    apt install -y build-essential python3 && \
+    apt install -y build-essential python3 pkg-config libzstd-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # 复制项目文件
 COPY package-lock.json package.json tsconfig.json ./
-# 添加这一行，确保 copy-files.cjs 被复制
 COPY copy-files.cjs ./
 
 # 安装依赖
-RUN npm i
+RUN npm ci
 
 # 复制源代码
 COPY src ./src
@@ -27,7 +26,7 @@ WORKDIR /opt/openbmclapi
 
 # 安装生产环境依赖
 RUN apt update && \
-    apt install -y build-essential python3 && \
+    apt install -y build-essential python3 pkg-config libzstd-dev && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package-lock.json package.json ./
@@ -63,5 +62,6 @@ COPY package.json ./
 ENV CLUSTER_PORT=4000
 EXPOSE $CLUSTER_PORT
 VOLUME /opt/openbmclapi/cache
+VOLUME /opt/openbmclapi/.env
 
 CMD ["tini", "--", "node", "--enable-source-maps", "dist/index.js"]
